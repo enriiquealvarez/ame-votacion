@@ -223,9 +223,8 @@ function renderVote(){
   if(S.mine && !editing){
     box.innerHTML=`<div class="card thanks"><div class="big">🌮</div><h3>¡Gracias por votar!</h3>
       <p>Tu voto: ${S.menu.map(c=>`<b>${esc(S.mine[c.id])}</b>`).join(' · ')}</p>
-      <p style="margin-top:10px">Puedes cambiarlo hasta el cierre.</p>
-      <div style="display:flex;gap:10px;margin-top:16px"><button class="btn ghost" id="edit">Cambiar mi voto</button><button class="btn" id="seeRes">Ver resultados</button></div></div>`;
-    $('#edit').onclick=()=>{editing=true; picks={...S.mine}; renderVote(); renderBar();};
+      <p style="margin-top:10px">Tu voto ya quedó registrado. Los ganadores se anuncian al cierre.</p>
+      <div style="display:flex;gap:10px;margin-top:16px"><button class="btn" id="seeRes">Ver resultados en vivo</button></div></div>`;
     $('#seeRes').onclick=()=>setTab('res');
     return;
   }
@@ -278,8 +277,9 @@ function renderAll(){
 $('#send').onclick=async()=>{
   const b=$('#send'); b.disabled=true; b.textContent='Enviando…';
   try{
-    const r=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(picks),credentials:'same-origin'});
+    const r=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...picks,tok:TOK,fp:await fingerprint()}),credentials:'same-origin'});
     const j=await r.json();
+    if(r.status===409 && j.menu){ S=j; picks={...(S.mine||picks)}; renderAll(); setTab('res'); throw new Error(j.error); }
     if(!r.ok) throw new Error(j.error||'No se pudo registrar');
     S=j; editing=false; toast('¡Voto registrado! 🌮'); renderAll(); setTab('res'); window.scrollTo({top:$('#tabs').offsetTop-10,behavior:'smooth'});
   }catch(e){ toast(e.message); renderBar(); }
@@ -370,9 +370,23 @@ function confetti(){
   try{ const r=await (await fetch('/api/check?key='+encodeURIComponent(k))).json();
     if(r.ok){ preview=true; const w=setInterval(()=>{ if(S){ clearInterval(w); setTab('res'); renderRes(); setTimeout(()=>$('#tabs').scrollIntoView({behavior:'smooth'}),400); } },100); } else toast('Clave de vista previa incorrecta'); }catch{} })();
 
+
+// ---------- candados contra voto doble ----------
+const TOK=(()=>{ try{ let t=localStorage.getItem('ame_tok'); if(!t){ t=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join(''); localStorage.setItem('ame_tok',t);} return t; }catch{ return ''; } })();
+async function fingerprint(){
+  try{
+    const c=document.createElement('canvas'); c.width=220; c.height=40; const x=c.getContext('2d');
+    x.textBaseline='top'; x.font='16px Arial'; x.fillStyle='#8e1f45'; x.fillRect(0,0,110,40); x.fillStyle='#e9a3b8'; x.fillText('AME Taquiza 🌮 ñ',4,10);
+    const raw=[navigator.userAgent,navigator.language,(navigator.languages||[]).join(','),screen.width+'x'+screen.height+'x'+screen.colorDepth,devicePixelRatio,
+      Intl.DateTimeFormat().resolvedOptions().timeZone,navigator.hardwareConcurrency,navigator.platform,navigator.maxTouchPoints,c.toDataURL()].join('|');
+    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+    return Array.from(new Uint8Array(h),b=>b.toString(16).padStart(2,'0')).join('').slice(0,40);
+  }catch{ return ''; }
+}
+
 async function init(){
   try{
-    S=await (await fetch('/api/state',{credentials:'same-origin'})).json();
+    S=await (await fetch('/api/state?tok='+encodeURIComponent(TOK),{credentials:'same-origin'})).json();
     if(S.mine) picks={...S.mine};
     renderAll();
   }catch{ $('#vote').innerHTML='<div class="loading">No se pudo cargar. Recarga la página.</div>'; }

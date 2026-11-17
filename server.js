@@ -48,8 +48,14 @@ function tally() {
   return { counts, total: Object.keys(votes).length };
 }
 
-function publicState(vid) {
-  const mine = vid && votes[vid] ? Object.fromEntries(MENU.map(c => [c.id, votes[vid][c.id] || null])) : null;
+function findVoter(vid, tok) {
+  if (vid && votes[vid]) return votes[vid];
+  if (tok) return Object.values(votes).find(v => v.tok === tok) || null;
+  return null;
+}
+function publicState(vid, tok) {
+  const v = findVoter(vid, tok);
+  const mine = v ? Object.fromEntries(MENU.map(c => [c.id, v[c.id] || null])) : null;
   return { menu: MENU, deadline: DEADLINE.toISOString(), closed: closed(), now: new Date().toISOString(), mine, ...tally() };
 }
 
@@ -97,7 +103,7 @@ http.createServer(async (req, res) => {
   }
 
   try {
-    if (url.pathname === '/api/state') return json(res, 200, publicState(vid), setCookie);
+    if (url.pathname === '/api/state') return json(res, 200, publicState(vid, (url.searchParams.get('tok') || '').slice(0, 64)), setCookie);
 
     if (url.pathname === '/api/stream') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
@@ -116,13 +122,19 @@ http.createServer(async (req, res) => {
         vote[c.id] = body[c.id];
       }
       const ih = ipHash(clientIp(req));
-      const isNew = !votes[vid];
-      if (isNew && Object.values(votes).filter(v => v.ip === ih).length >= MAX_PER_IP)
+      const tok = String(body.tok || '').slice(0, 64);
+      const fp = String(body.fp || '').slice(0, 64);
+      const fpip = fp ? ipHash(fp + '|' + ih) : '';
+      const all = Object.values(votes);
+      // un solo voto: misma cookie, mismo token guardado en el celular, o mismo dispositivo en la misma red
+      if (votes[vid] || (tok && all.some(v => v.tok === tok)) || (fpip && all.some(v => v.fpip === fpip)))
+        return json(res, 409, { error: 'Ya registraste tu voto desde este dispositivo. ¡Gracias! 🌮', ...publicState(vid, tok) });
+      if (all.filter(v => v.ip === ih).length >= MAX_PER_IP)
         return json(res, 429, { error: 'Se alcanzó el límite de votos desde esta conexión.' });
-      votes[vid] = { ...vote, ip: ih, at: new Date().toISOString() };
+      votes[vid] = { ...vote, ip: ih, tok, fpip, at: new Date().toISOString() };
       save();
       broadcast();
-      return json(res, 200, publicState(vid), setCookie);
+      return json(res, 200, publicState(vid, tok), setCookie);
     }
 
     if (url.pathname === '/api/check') {
