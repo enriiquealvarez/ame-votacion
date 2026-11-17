@@ -11,6 +11,8 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
 const MAX_PER_IP = Number(process.env.MAX_PER_IP || 25);
 const FILE = path.join(DATA_DIR, 'votes.json');
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const KEEP_BACKUPS = Number(process.env.KEEP_BACKUPS || 20);
 const PUB = path.join(__dirname, 'public');
 
 const MENU = [
@@ -21,16 +23,31 @@ const MENU = [
 ];
 
 // ---------- almacenamiento ----------
-fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(BACKUP_DIR, { recursive: true });
 let votes = {};
-try { votes = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { votes = {}; }
+try { votes = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch {
+  // si falta votes.json, recupera automáticamente el respaldo más reciente
+  const last = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.json')).sort().pop();
+  try { votes = last ? JSON.parse(fs.readFileSync(path.join(BACKUP_DIR, last), 'utf8')) : {}; if (last) console.log(`[restaurado] ${Object.keys(votes).length} votos desde backups/${last}`); }
+  catch { votes = {}; }
+}
+console.log(`[inicio] ${Object.keys(votes).length} votos cargados`);
+
+function backup() {
+  try {
+    const name = 'votes-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+    fs.copyFileSync(FILE, path.join(BACKUP_DIR, name));
+    const files = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.json')).sort();
+    for (const f of files.slice(0, Math.max(0, files.length - KEEP_BACKUPS))) fs.unlinkSync(path.join(BACKUP_DIR, f));
+  } catch (e) { console.error('[backup] error', e.message); }
+}
 let saving = false, pending = false;
 function save() {
   if (saving) { pending = true; return; }
   saving = true;
   const tmp = FILE + '.tmp';
   fs.writeFile(tmp, JSON.stringify(votes), err => {
-    if (!err) fs.renameSync(tmp, FILE);
+    if (!err) { fs.renameSync(tmp, FILE); backup(); } else console.error('[guardar] error', err.message);
     saving = false;
     if (pending) { pending = false; save(); }
   });
@@ -128,10 +145,11 @@ http.createServer(async (req, res) => {
       const all = Object.values(votes);
       // un solo voto: misma cookie, mismo token guardado en el celular, o mismo dispositivo en la misma red
       if (votes[vid] || (tok && all.some(v => v.tok === tok)) || (fpip && all.some(v => v.fpip === fpip)))
-        return json(res, 409, { error: 'Ya registraste tu voto desde este dispositivo. ¡Gracias! 🌮', ...publicState(vid, tok) });
+        { console.log(`[rechazado] voto doble · ${new Date().toISOString()}`); return json(res, 409, { error: 'Ya registraste tu voto desde este dispositivo. ¡Gracias! 🌮', ...publicState(vid, tok) }); }
       if (all.filter(v => v.ip === ih).length >= MAX_PER_IP)
         return json(res, 429, { error: 'Se alcanzó el límite de votos desde esta conexión.' });
       votes[vid] = { ...vote, ip: ih, tok, fpip, at: new Date().toISOString() };
+      console.log(`[voto] #${Object.keys(votes).length} · ${MENU.map(c => vote[c.id]).join(' · ')}`);
       save();
       broadcast();
       return json(res, 200, publicState(vid, tok), setCookie);
