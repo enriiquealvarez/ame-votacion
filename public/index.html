@@ -129,6 +129,17 @@ table.rt tr:hover td{background:var(--blush)}
 body.present{font-size:18px}
 body.present .wrap{max-width:1000px}
 body.present header,body.present .hero,body.present #countBox,body.present .wa,body.present footer{display:none}
+
+.fill.bump{box-shadow:0 0 0 3px rgba(233,163,184,.6)}
+.res-row.flash .res-top b{animation:fl 1.6s}
+@keyframes fl{0%,40%{color:#e0245e}100%{color:inherit}}
+.plus{display:inline-block;margin-left:6px;color:#25a35a;font-weight:800;font-size:12px;animation:pop 1.6s forwards}
+@keyframes pop{0%{opacity:0;transform:translateY(6px)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+.total.bump b{animation:tb .8s}
+@keyframes tb{40%{transform:scale(1.35);color:#e0245e}}
+.total b{display:inline-block}
+.upd{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.live.off i{background:#bbb;animation:none}
 </style>
 </head>
 <body>
@@ -240,20 +251,29 @@ function renderVote(){
   });
 }
 
+let prevCounts=null, prevTotal=null, lastUpdate=Date.now();
 function renderRes(){
   const box=$('#res');
-  let html=`<div class="total"><b>${S.total}</b> ${S.total===1?'persona ha votado':'personas han votado'}</div>`;
   if(S.closed || preview){ renderFinal(box); return; }
+  const oldW={}; box.querySelectorAll('.fill[data-k]').forEach(e=>oldW[e.dataset.k]=e.style.width);
+  const bumped=prevTotal!==null && S.total>prevTotal;
+  let html=`<div class="total${bumped?' bump':''}"><b>${S.total}</b> ${S.total===1?'persona ha votado':'personas han votado'}<span class="upd" id="upd"></span></div>`;
   html+=S.menu.map(c=>{
     const cnt=S.counts[c.id]; const sum=Object.values(cnt).reduce((a,b)=>a+b,0)||1; const L=leaders(c);
-    const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-    return `<div class="card"><h2><span class="ic">${c.icon}</span>${esc(c.title)}</h2>${rows.map(([o,n])=>`
-      <div class="res-row${L.names.includes(o)?' lead':''}${S.mine&&S.mine[c.id]===o?' mine':''}">
-        <div class="res-top"><b>${L.names.includes(o)?'🏆 ':''}${esc(o)}</b><span class="n">${n} · ${Math.round(n*100/sum)}%</span></div>
-        <div class="track"><div class="fill" style="width:${n*100/sum}%"></div></div></div>`).join('')}</div>`;
+    const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+    return `<div class="card"><h2><span class="ic">${c.icon}</span>${esc(c.title)}</h2>${rows.map(([o,n])=>{
+      const k=c.id+'|'+o, up=prevCounts && prevCounts[c.id] && n>(prevCounts[c.id][o]||0);
+      return `<div class="res-row${L.names.includes(o)?' lead':''}${S.mine&&S.mine[c.id]===o?' mine':''}${up?' flash':''}">
+        <div class="res-top"><b>${L.names.includes(o)?'🏆 ':''}${esc(o)}${up?`<span class="plus">+${n-(prevCounts[c.id][o]||0)}</span>`:''}</b><span class="n">${n} · ${Math.round(n*100/sum)}%</span></div>
+        <div class="track"><div class="fill" data-k="${esc(k)}" data-w="${n*100/sum}%" style="width:${oldW[k]??'0%'}"></div></div></div>`}).join('')}</div>`;
   }).join('');
   box.innerHTML=html;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>box.querySelectorAll('.fill[data-w]').forEach(e=>e.style.width=e.dataset.w)));
+  prevCounts=JSON.parse(JSON.stringify(S.counts)); prevTotal=S.total; tickUpd();
 }
+function tickUpd(){ const e=$('#upd'); if(!e) return; const s=Math.round((Date.now()-lastUpdate)/1000);
+  e.textContent = s<5 ? 'Actualizado ahora mismo' : `Actualizado hace ${s<60?s+' s':Math.round(s/60)+' min'}`; }
+setInterval(tickUpd,5000);
 
 function renderBar(){
   const show = S && !S.closed && tab==='vote' && (!S.mine || editing);
@@ -390,10 +410,35 @@ async function init(){
     if(S.mine) picks={...S.mine};
     renderAll();
   }catch{ $('#vote').innerHTML='<div class="loading">No se pudo cargar. Recarga la página.</div>'; }
-  const es=new EventSource('/api/stream');
-  es.onmessage=e=>{ const d=JSON.parse(e.data); if(!S) return; const wasClosed=S.closed; Object.assign(S,d);
-    renderRes(); if(d.closed && !wasClosed) renderAll(); };
+  connectLive();
 }
+
+// ---------- tiempo real: SSE + reconexión + respaldo ----------
+let es=null, lastMsg=0;
+function applyLive(d){
+  if(!S) return; lastMsg=Date.now();
+  const changed = d.total!==S.total || JSON.stringify(d.counts)!==JSON.stringify(S.counts) || d.closed!==S.closed;
+  const wasClosed=S.closed; Object.assign(S,{counts:d.counts,total:d.total,closed:d.closed});
+  lastUpdate=Date.now();
+  if(d.closed && !wasClosed) return renderAll();
+  if(changed) renderRes(); else tickUpd();
+}
+function connectLive(){
+  try{ es && es.close(); }catch{}
+  es=new EventSource('/api/stream');
+  es.onopen=()=>$('#liveTag').classList.remove('off');
+  es.onmessage=e=>{ try{ applyLive(JSON.parse(e.data)); }catch{} };
+  es.onerror=()=>{ $('#liveTag').classList.add('off'); es.close(); setTimeout(connectLive,3000); };
+}
+async function refreshNow(){
+  try{ const d=await (await fetch('/api/state?tok='+encodeURIComponent(TOK),{credentials:'same-origin',cache:'no-store'})).json(); applyLive(d); }catch{}
+}
+// al regresar de WhatsApp u otra app, se pone al día al instante
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ refreshNow(); connectLive(); } });
+addEventListener('pageshow',e=>{ if(e.persisted){ refreshNow(); connectLive(); } });
+addEventListener('online',()=>{ refreshNow(); connectLive(); });
+// respaldo: si en 20 s no llegó nada por la conexión en vivo, consulta directo
+setInterval(()=>{ if(document.visibilityState==='visible' && Date.now()-lastMsg>20000) refreshNow(); },10000);
 init();
 </script>
 </body>

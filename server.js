@@ -65,7 +65,7 @@ function broadcast() {
   const msg = `data: ${JSON.stringify({ ...tally(), closed: closed() })}\n\n`;
   for (const res of clients) res.write(msg);
 }
-setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 25000);
+setInterval(broadcast, 15000); // latido con datos: mantiene viva la conexión y al día a todos
 // avisa a todos al momento exacto del cierre
 const msToClose = DEADLINE.getTime() - Date.now();
 if (msToClose > 0 && msToClose < 2 ** 31 - 1) setTimeout(broadcast, msToClose + 500);
