@@ -79,6 +79,56 @@ h1{font-family:'Playfair Display',serif;font-size:30px;color:var(--wine);margin-
 footer{text-align:center;font-family:'Great Vibes',cursive;font-size:26px;color:#c45d7f;margin-top:26px}
 .hide{display:none!important}
 .loading{text-align:center;color:var(--muted);padding:30px}
+
+/* ---------- pantalla final ---------- */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+.preview-tag{background:#fff3cd;color:#7a5a00;border:1px solid #f0d78c;border-radius:12px;padding:10px 14px;font-size:13px;text-align:center;margin:14px 0}
+.combo{background:linear-gradient(150deg,var(--wine),#b8456d);color:#fff;border-radius:22px;padding:22px 18px;margin:16px 0;box-shadow:0 14px 34px rgba(142,31,69,.35);position:relative;overflow:hidden}
+.combo::after{content:'🌮';position:absolute;right:-10px;bottom:-24px;font-size:120px;opacity:.12;transform:rotate(-15deg)}
+.combo h3{font-family:'Playfair Display',serif;font-size:24px;text-align:center}
+.combo .sub{text-align:center;font-size:13px;opacity:.85;margin:4px 0 14px}
+.combo-row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border-radius:14px;padding:12px;margin-top:8px;opacity:0;transform:translateY(12px);animation:up .5s forwards}
+.combo-row .ci{font-size:26px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+.combo-row .cc{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.8}
+.combo-row .cw{font-family:'Playfair Display',serif;font-size:19px;line-height:1.15}
+.combo-row .cv{margin-left:auto;text-align:right;font-weight:800;font-size:18px;white-space:nowrap}
+.combo-row .cv small{display:block;font-weight:400;font-size:11px;opacity:.8}
+@keyframes up{to{opacity:1;transform:none}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 16px}
+.stat{background:#fff;border:1px solid #f3cbd7;border-radius:14px;padding:12px 8px;text-align:center}
+.stat b{display:block;font-family:'Playfair Display',serif;font-size:22px;color:var(--wine);line-height:1.1}
+.stat span{font-size:11px;color:var(--muted);display:block;margin-top:4px}
+.stat em{font-style:normal;font-size:12px;color:var(--ink);display:block;margin-top:2px;font-weight:700}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chip{flex:none;border:1.5px solid #f0c3d1;background:#fff;border-radius:99px;padding:8px 14px;font:700 14px Lato,sans-serif;color:var(--muted);cursor:pointer}
+.chip.on{background:var(--wine);border-color:var(--wine);color:#fff}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:18px 0 6px;min-height:200px}
+.pod{flex:1;max-width:150px;text-align:center}
+.pod .pname{font-weight:800;font-size:13px;color:var(--ink);margin-bottom:6px;min-height:34px;display:flex;align-items:flex-end;justify-content:center;line-height:1.2}
+.pod .pblock{border-radius:14px 14px 4px 4px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:10px;height:0;transition:height .9s cubic-bezier(.2,.9,.2,1)}
+.pod .medal{font-size:28px}
+.pod .pv{font-weight:800;font-size:15px;margin-top:2px}
+.pod.p1 .pblock{background:linear-gradient(180deg,#d9a441,#b98222)}
+.pod.p2 .pblock{background:linear-gradient(180deg,#b9b9c3,#8f8f9c)}
+.pod.p3 .pblock{background:linear-gradient(180deg,#d29468,#a96a3f)}
+table.rt{width:100%;border-collapse:collapse;font-size:14px}
+table.rt th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 6px;border-bottom:1.5px solid #f3cbd7;cursor:pointer;user-select:none;white-space:nowrap}
+table.rt th.sorted{color:var(--wine)}
+table.rt td{padding:9px 6px;border-bottom:1px solid #f8e1e8;vertical-align:middle}
+table.rt tr{opacity:0;animation:up .4s forwards}
+table.rt tr.top td{background:#fff7e6}
+table.rt tr.mine td:nth-child(2)::after{content:' · tu voto';color:var(--muted);font-size:11px}
+table.rt tr:hover td{background:var(--blush)}
+.rk{font-weight:800;color:var(--wine);width:34px;text-align:center}
+.cat-pill{font-size:16px}
+.mini{height:8px;background:var(--blush);border-radius:99px;overflow:hidden;margin-top:4px;min-width:60px}
+.mini i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--wine));border-radius:99px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.pct{font-weight:800;color:var(--wine);white-space:nowrap;text-align:right}
+.actions{display:flex;gap:10px;margin:6px 0 14px;flex-wrap:wrap}
+.actions .btn{min-width:150px}
+body.present{font-size:18px}
+body.present .wrap{max-width:1000px}
+body.present header,body.present .hero,body.present #countBox,body.present .wa,body.present footer{display:none}
 </style>
 </head>
 <body>
@@ -126,6 +176,7 @@ footer{text-align:center;font-family:'Great Vibes',cursive;font-size:26px;color:
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -193,11 +244,7 @@ function renderVote(){
 function renderRes(){
   const box=$('#res');
   let html=`<div class="total"><b>${S.total}</b> ${S.total===1?'persona ha votado':'personas han votado'}</div>`;
-  if(S.closed){
-    html+=S.menu.map(c=>{const L=leaders(c); return `<div class="card winner"><div class="cat">${c.icon} ${esc(c.title)}</div>
-      <div class="w">${L.names.length?L.names.map(esc).join(' / '):'Sin votos'}</div>
-      <div class="v">${L.names.length>1?'Empate · ':''}${L.max} voto${L.max===1?'':'s'}</div></div>`}).join('');
-  }
+  if(S.closed || preview){ renderFinal(box); return; }
   html+=S.menu.map(c=>{
     const cnt=S.counts[c.id]; const sum=Object.values(cnt).reduce((a,b)=>a+b,0)||1; const L=leaders(c);
     const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
@@ -240,6 +287,88 @@ $('#send').onclick=async()=>{
 
 const shareText = '🌮 ¡Ayúdanos a elegir la Taquiza Gourmet de AME Catering! Vota por tus guisados y agua fresca favoritos y mira los resultados en vivo. Cierra el miércoles 25 de noviembre 👉 ';
 $('#waBtn').href='https://wa.me/?text='+encodeURIComponent(shareText+location.origin+'/');
+
+
+// ---------- pantalla final interactiva ----------
+let preview=false, finalCat='all', sortBy={k:'v',d:-1}, confettiDone=false;
+
+function ranked(cat){
+  const cnt=S.counts[cat.id]; const sum=Object.values(cnt).reduce((a,b)=>a+b,0);
+  const rows=Object.entries(cnt).map(([o,v])=>({o,v,cat,p:sum?v*100/sum:0})).sort((a,b)=>b.v-a.v||a.o.localeCompare(b.o));
+  let rank=0,last=null; rows.forEach((r,i)=>{ if(r.v!==last){rank=i+1; last=r.v;} r.r=rank; });
+  return rows;
+}
+
+function renderFinal(box){
+  const cats=S.menu, R=Object.fromEntries(cats.map(c=>[c.id,ranked(c)]));
+  // estadísticas
+  let close=null; cats.forEach(c=>{const r=R[c.id]; if(r[0].v>0){const m=r[0].v-(r[1]?r[1].v:0); if(!close||m<close.m) close={c,m};}});
+  let fav=null; cats.forEach(c=>{const r=R[c.id][0]; if(r.v>0&&(!fav||r.p>fav.p)) fav=r;});
+
+  let h='';
+  if(preview && !S.closed) h+=`<div class="preview-tag">👀 Vista previa del cierre con los votos actuales. Solo tú la ves.</div>`;
+  h+=`<div class="combo"><h3>🏆 La Taquiza ganadora</h3><div class="sub">${S.total} ${S.total===1?'persona votó':'personas votaron'}</div>`+
+    cats.map((c,i)=>{const top=R[c.id].filter(r=>r.r===1&&r.v>0);
+      return `<div class="combo-row" style="animation-delay:${.15+i*.18}s"><div class="ci">${c.icon}</div><div><div class="cc">${esc(c.title)}</div>
+      <div class="cw">${top.length?top.map(t=>esc(t.o)).join(' / '):'Sin votos'}</div></div>
+      <div class="cv">${top.length?top[0].v:0}<small>${top.length>1?'empate':(top.length?Math.round(top[0].p)+'%':'')}</small></div></div>`}).join('')+`</div>`;
+  h+=`<div class="stats">
+    <div class="stat"><b>${S.total}</b><span>votantes</span></div>
+    <div class="stat"><b>${fav?Math.round(fav.p)+'%':'—'}</b><span>favorito absoluto</span><em>${fav?esc(fav.o):''}</em></div>
+    <div class="stat"><b>${close?(close.m===0?'Empate':'+'+close.m):'—'}</b><span>la más reñida</span><em>${close?close.c.icon+' '+esc(close.c.title):''}</em></div></div>`;
+  h+=`<div class="actions"><a class="btn" id="shareRes" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;background:#25d366">Compartir ganadores</a>
+      <button class="btn ghost" id="present">${document.body.classList.contains('present')?'Salir de presentación':'Modo presentación'}</button></div>`;
+  h+=`<div class="chips"><button class="chip${finalCat==='all'?' on':''}" data-k="all">Todas</button>`+
+     cats.map(c=>`<button class="chip${finalCat===c.id?' on':''}" data-k="${c.id}">${c.icon} ${esc(c.title.replace('Guisados de ',''))}</button>`).join('')+`</div>`;
+
+  let rows = finalCat==='all' ? cats.flatMap(c=>R[c.id]) : R[finalCat];
+  h+=`<div class="card">`;
+  if(finalCat!=='all'){
+    const p=rows.filter(r=>r.v>0).slice(0,3), max=p[0]?p[0].v:1, order=[1,0,2];
+    h+=`<div class="podium">`+order.map(i=>p[i]?`<div class="pod p${i+1}"><div class="pname">${esc(p[i].o)}</div>
+      <div class="pblock" data-h="${[150,110,80][i]*(.55+.45*p[i].v/max)}"><div class="medal">${['🥇','🥈','🥉'][i]}</div><div class="pv">${p[i].v}</div></div></div>`:'<div class="pod"></div>').join('')+`</div>`;
+  }
+  const dir=sortBy.d, k=sortBy.k;
+  rows=[...rows].sort((a,b)=> k==='o'?dir*a.o.localeCompare(b.o) : k==='c'?dir*a.cat.title.localeCompare(b.cat.title)||b.v-a.v : dir*(a.v-b.v)||a.o.localeCompare(b.o));
+  const th=(key,label)=>`<th data-s="${key}" class="${k===key?'sorted':''}">${label}${k===key?(dir<0?' ▼':' ▲'):''}</th>`;
+  h+=`<table class="rt"><thead><tr><th>#</th>${th('o','Opción')}${finalCat==='all'?th('c','Cat.'):''}${th('v','Votos')}<th style="text-align:right">%</th></tr></thead><tbody>`+
+    rows.map((r,i)=>`<tr class="${r.r===1&&r.v>0?'top':''}${S.mine&&S.mine[r.cat.id]===r.o?' mine':''}" style="animation-delay:${Math.min(i*.035,.8)}s">
+      <td class="rk">${r.v>0?(r.r===1?'🏆':r.r):'–'}</td><td><b>${esc(r.o)}</b><div class="mini"><i data-w="${r.p}"></i></div></td>
+      ${finalCat==='all'?`<td class="cat-pill" title="${esc(r.cat.title)}">${r.cat.icon}</td>`:''}<td><b>${r.v}</b></td><td class="pct">${Math.round(r.p)}%</td></tr>`).join('')+`</tbody></table></div>`;
+  box.innerHTML=h;
+
+  // animaciones
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    box.querySelectorAll('.mini i').forEach(e=>e.style.width=e.dataset.w+'%');
+    box.querySelectorAll('.pblock').forEach(e=>e.style.height=e.dataset.h+'px');
+  }));
+  // eventos
+  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{finalCat=b.dataset.k; if(finalCat!=='all'&&sortBy.k==='c') sortBy={k:'v',d:-1}; renderFinal(box);});
+  box.querySelectorAll('th[data-s]').forEach(t=>t.onclick=()=>{const s=t.dataset.s; sortBy= sortBy.k===s?{k:s,d:-sortBy.d}:{k:s,d:s==='v'?-1:1}; renderFinal(box);});
+  const txt='🏆 ¡Resultados de la Taquiza Gourmet de AME Catering!\n\n'+cats.map(c=>{const t=R[c.id].filter(r=>r.r===1&&r.v>0);return `${c.icon} ${c.title}: ${t.length?t.map(x=>x.o).join(' / ')+` (${t[0].v} votos)`:'Sin votos'}`}).join('\n')+`\n\n🗳️ ${S.total} personas votaron. ¡Gracias!\n${location.origin}/`;
+  $('#shareRes').href='https://wa.me/?text='+encodeURIComponent(txt);
+  $('#present').onclick=async()=>{
+    const on=!document.body.classList.contains('present');
+    document.body.classList.toggle('present',on);
+    try{ on?await document.documentElement.requestFullscreen():document.fullscreenElement&&await document.exitFullscreen(); }catch{}
+    renderFinal(box); if(on){ confettiDone=false; confetti(); }
+  };
+  if(!confettiDone){ confettiDone=true; confetti(); }
+}
+document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && document.body.classList.contains('present')){ document.body.classList.remove('present'); renderRes(); }});
+
+function confetti(){
+  const c=$('#confetti'), x=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+  const cols=['#8e1f45','#e9a3b8','#c9973c','#f6d6e0','#b8456d','#ffffff'];
+  const P=Array.from({length:160},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.6,w:6+Math.random()*6,h:8+Math.random()*8,vx:-1.5+Math.random()*3,vy:2+Math.random()*3.5,r:Math.random()*6,vr:-.2+Math.random()*.4,col:cols[Math.random()*cols.length|0]}));
+  let t=0; (function f(){ x.clearRect(0,0,c.width,c.height); P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr; x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.col;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});
+    if(++t<260) requestAnimationFrame(f); else x.clearRect(0,0,c.width,c.height); })();
+}
+
+// vista previa para el organizador: /?preview=TU_ADMIN_KEY
+(async()=>{ const k=new URLSearchParams(location.search).get('preview'); if(!k) return;
+  try{ const r=await (await fetch('/api/check?key='+encodeURIComponent(k))).json();
+    if(r.ok){ preview=true; const w=setInterval(()=>{ if(S){ clearInterval(w); setTab('res'); renderRes(); setTimeout(()=>$('#tabs').scrollIntoView({behavior:'smooth'}),400); } },100); } else toast('Clave de vista previa incorrecta'); }catch{} })();
 
 async function init(){
   try{

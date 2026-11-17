@@ -125,6 +125,10 @@ http.createServer(async (req, res) => {
       return json(res, 200, publicState(vid), setCookie);
     }
 
+    if (url.pathname === '/api/check') {
+      return json(res, 200, { ok: !!ADMIN_KEY && url.searchParams.get('key') === ADMIN_KEY });
+    }
+
     if (url.pathname === '/api/export') {
       if (!ADMIN_KEY || url.searchParams.get('key') !== ADMIN_KEY) return json(res, 403, { error: 'no' });
       const rows = [['fecha', ...MENU.map(c => c.title)], ...Object.values(votes).map(v => [v.at, ...MENU.map(c => v[c.id])])];
